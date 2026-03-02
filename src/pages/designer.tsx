@@ -197,7 +197,12 @@ export default function Designer() {
     <div className="flex gap-8 p-8 min-h-screen">
       {/* Controls */}
       <div className="w-96 flex-shrink-0 space-y-4">
-        <h1 className="text-2xl font-bold">Case Designer</h1>
+        <div className="flex-row flex gap-2">
+          <h1 className="text-2xl font-bold">Case Designer</h1>
+          <button className="bg-green-800 hover:bg-green-700 px-3 py-1 rounded text-sm hover:cursor-pointer">
+            Generate Case
+          </button>
+        </div>
 
         <div className="bg-zinc-900 rounded-xl p-4 shadow-lg">
           <h3 className="text-lg font-semibold mb-3">Phone Dimensions</h3>
