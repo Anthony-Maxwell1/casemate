@@ -1,65 +1,136 @@
-// src/lib/templates/cube.ts
-import { roundedCuboid } from '@jscad/modeling/src/primitives'
-import { geom3 } from '@jscad/modeling/src/geometries'
-import { translate } from '@jscad/modeling/src/operations/transforms'
-import { subtract } from '@jscad/modeling/src/operations/booleans'
+// src/lib/templates/generic.ts
+
+import {
+  roundedCuboid,
+  cuboid,
+  cylinder,
+} from "@jscad/modeling/src/primitives";
+import { geom3 } from "@jscad/modeling/src/geometries";
+import {
+  translate,
+  rotateX,
+  rotateY,
+} from "@jscad/modeling/src/operations/transforms";
+import { subtract } from "@jscad/modeling/src/operations/booleans";
+
+export type Cutout =
+  | {
+      type: "box";
+      size: [number, number, number];
+      position: [number, number, number]; // relative to outer MIN corner
+    }
+  | {
+      type: "cylinder";
+      radius: number;
+      height: number;
+      position: [number, number, number]; // base center relative to outer MIN corner
+      axis?: "x" | "y" | "z";
+    };
 
 export interface Params {
-  width: number
-  height: number
-  depth: number
-  innerWidth: number
-  innerHeight: number
-  innerDepth: number
-  innerOffset?: [number, number, number] // Defaults to center, however if provided will be relative to top (x) bottom (y) left (z) corner of the cube
-radius?: number
-innerRadius?: number
+  width: number;
+  height: number;
+  depth: number;
+
+  innerWidth: number;
+  innerHeight: number;
+  innerDepth: number;
+
+  lipHeight: number;
+  lipInset: number;
+
+  radius?: number;
+  innerRadius?: number;
+
+  cutouts: Cutout[];
 }
 
-interface ResolvedParams {
-    width: number
-    height: number
-    depth: number
-    innerWidth: number
-    innerHeight: number
-    innerDepth: number
-    innerOffset: [number, number, number],
-radius: number
-innerRadius: number
-}
+export function build(params: Params): geom3.Geom3 {
+  const {
+    width,
+    height,
+    depth,
+    innerWidth,
+    innerHeight,
+    innerDepth,
+    lipHeight,
+    lipInset,
+    radius = 0,
+    innerRadius = radius,
+    cutouts,
+  } = params;
 
-function ResolveParams(params: Params): ResolvedParams {
-    let resolved = params as ResolvedParams
+  // Outer shell (centered)
+  const outer = roundedCuboid({
+    size: [width, height, depth],
+    roundRadius: radius,
+  });
 
-    if (!resolved.innerOffset) {
-        resolved.innerOffset = [
-            (resolved.width - resolved.innerWidth) / 2,
-            (resolved.height - resolved.innerHeight) / 2,
-            (resolved.depth - resolved.innerDepth) / 2
-        ]
+  // Inner cavity (offset from TOP = Y+)
+  const inner = roundedCuboid({
+    size: [innerWidth, innerHeight, innerDepth],
+    roundRadius: innerRadius,
+  });
+
+  const innerTranslated = translate(
+    [0, height / 2 - innerHeight / 2, 0],
+    inner,
+  );
+
+  let body = subtract(outer, innerTranslated);
+
+  // Lip
+  if (lipHeight > 0) {
+    const lip = roundedCuboid({
+      size: [innerWidth - lipInset * 2, lipHeight, innerDepth - lipInset * 2],
+      roundRadius: innerRadius,
+    });
+
+    const lipTranslated = translate([0, height / 2 - lipHeight / 2, 0], lip);
+
+    body = subtract(body, lipTranslated);
+  }
+
+  const minCorner = [-width / 2, -height / 2, -depth / 2];
+
+  for (const cut of cutouts) {
+    if (cut.type === "box") {
+      const box = cuboid({ size: cut.size });
+
+      const translated = translate(
+        [
+          minCorner[0] + cut.position[0] + cut.size[0] / 2,
+          minCorner[1] + cut.position[1] + cut.size[1] / 2,
+          minCorner[2] + cut.position[2] + cut.size[2] / 2,
+        ],
+        box,
+      );
+
+      body = subtract(body, translated);
     }
 
-    if (!resolved.radius) resolved.radius = 0
-    if (!resolved.innerRadius) resolved.innerRadius = resolved.radius
+    if (cut.type === "cylinder") {
+      let cyl = cylinder({
+        radius: cut.radius,
+        height: cut.height,
+        segments: 64,
+      });
 
-    return resolved
-}
+      if (cut.axis === "x") cyl = rotateY(Math.PI / 2, cyl);
+      if (cut.axis === "z") cyl = rotateX(Math.PI / 2, cyl);
 
-// Returns a JSCAD geometry
-export function build(params: Params): geom3.Geom3 {
-    const resolvedParams = ResolveParams(params);
+      const translated = translate(
+        [
+          minCorner[0] + cut.position[0],
+          minCorner[1] + cut.position[1],
+          minCorner[2] + cut.position[2],
+        ],
+        cyl,
+      );
 
-    let outer = roundedCuboid({
-        size: [resolvedParams.width, resolvedParams.height, resolvedParams.depth],
-        roundRadius: resolvedParams.radius
-    });
+      body = subtract(body, translated);
+    }
+  }
 
-    let inner = roundedCuboid({
-        size: [resolvedParams.innerWidth, resolvedParams.innerHeight, resolvedParams.innerDepth],
-        roundRadius: resolvedParams.innerRadius
-    });
-
-    inner = translate(resolvedParams.innerOffset, inner) as geom3.Geom3;
-
-    return subtract(outer, inner); // now subtract is geometry-aware
+  return body;
 }
