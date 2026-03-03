@@ -1,23 +1,28 @@
 import { useEffect, useState } from "react";
 
-interface Phone {
+export interface Phone {
   width: number;
   height: number;
   depth: number;
   cornerRadius: number;
-  cameras: { position: [number, number]; shape: string; radius: number }[];
+  cameras: {
+    position: [number, number];
+    shape: "circle" | "rectangle";
+    radius: number;
+  }[];
   buttons: {
     position: [number, number];
-    shape: string;
+    shape: "circle" | "rectangle";
     size: [number, number];
   }[];
 }
 
-interface Cutout {
-  shape: string;
+export interface Cutout {
+  shape: "circle" | "rectangle";
   position: [number, number];
   size?: [number, number];
   radius?: number;
+  face?: "back" | "left" | "right";
 }
 
 export default function Designer() {
@@ -38,27 +43,30 @@ export default function Designer() {
 
   const cmToPx = 5;
 
-  const backCutouts: Cutout[] = phone.cameras.map((c) => ({
-    shape: c.shape,
-    position: c.position,
-    radius: c.radius,
-  }));
-
   const leftButtons = phone.buttons
     .filter((b) => b.position[0] <= phone.width * 0.3)
     .map((b) => ({
       shape: b.shape,
-      position: [0, b.position[1]] as [number, number],
-      size: [b.size[0], b.size[1]] as [number, number],
+      face: "left" as const,
+      position: [phone.depth / 2, b.position[1]] as [number, number],
+      size: b.size,
     }));
 
   const rightButtons = phone.buttons
     .filter((b) => b.position[0] >= phone.width * 0.7)
     .map((b) => ({
       shape: b.shape,
-      position: [phone.depth, b.position[1]] as [number, number],
-      size: [b.size[0], b.size[1]] as [number, number],
+      face: "right" as const,
+      position: [phone.depth / 2, b.position[1]] as [number, number],
+      size: b.size,
     }));
+
+  const backCutouts = phone.cameras.map((c) => ({
+    shape: c.shape,
+    face: "back" as const,
+    position: c.position,
+    radius: c.radius,
+  }));
 
   const updatePhone = (key: keyof Phone, value: number) => {
     setPhone((prev) => ({ ...prev, [key]: value }));
@@ -196,12 +204,15 @@ export default function Designer() {
   return (
     <div className="flex gap-8 p-8 min-h-screen">
       {/* Controls */}
-      <div className="w-96 flex-shrink-0 space-y-4">
+      <div className="w-96 shrink-0 space-y-4">
         <div className="flex-row flex gap-2">
           <h1 className="text-2xl font-bold">Case Designer</h1>
-          <button className="bg-green-800 hover:bg-green-700 px-3 py-1 rounded text-sm hover:cursor-pointer">
+          <a
+            className="bg-green-800 hover:bg-green-700 px-3 py-1 rounded text-sm hover:cursor-pointer"
+            href={`/designer/generate?phone=${encodeURIComponent(JSON.stringify(phone))}`}
+          >
             Generate Case
-          </button>
+          </a>
         </div>
 
         <div className="bg-zinc-900 rounded-xl p-4 shadow-lg">

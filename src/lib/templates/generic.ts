@@ -11,7 +11,7 @@ import {
   rotateX,
   rotateY,
 } from "@jscad/modeling/src/operations/transforms";
-import { subtract } from "@jscad/modeling/src/operations/booleans";
+import { subtract, union } from "@jscad/modeling/src/operations/booleans";
 
 export type Cutout =
   | {
@@ -81,14 +81,15 @@ export function build(params: Params): geom3.Geom3 {
 
   // Lip
   if (lipHeight > 0) {
-    const lip = roundedCuboid({
-      size: [innerWidth - lipInset * 2, lipHeight, innerDepth - lipInset * 2],
-      roundRadius: innerRadius,
+    const lip = cuboid({
+      size: [innerWidth, lipHeight, lipInset],
     });
 
     const lipTranslated = translate([0, height / 2 - lipHeight / 2, 0], lip);
 
-    body = subtract(body, lipTranslated);
+    const finalLip = subtract(lipTranslated, innerTranslated);
+
+    body = union(body, finalLip);
   }
 
   const minCorner = [-width / 2, -height / 2, -depth / 2];
