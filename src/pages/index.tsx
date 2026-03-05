@@ -1,6 +1,6 @@
 // src/pages/index.tsx
 
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Preview } from "@/components/Preview";
 import { Params, build, Cutout } from "../lib/templates/generic";
 // @ts-ignore
@@ -87,44 +87,35 @@ export default function Home() {
   };
 
   const Section = ({ title, children }: any) => (
-    <div
-      style={{
-        marginBottom: "2rem",
-        padding: "1rem",
-        background: "#1e1e1e",
-        borderRadius: 12,
-        boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
-      }}
-    >
-      <h3>{title}</h3>
+    <div className="mb-8 p-4 bg-gray-100 rounded-lg shadow-md">
+      <h3 className="font-bold text-lg mb-4">{title}</h3>
       {children}
     </div>
   );
 
   const numberInput = (key: keyof Params) => (
-    <div style={{ marginBottom: "1rem" }}>
-      <label>{key}</label>
-      <br />
+    <div className="mb-4">
+      <label className="block font-semibold text-sm mb-2">{key}</label>
       <input
         type="range"
         min={0}
         max={200}
         value={params[key] as number}
         onChange={(e) => handleChange(key, Number(e.target.value))}
-        style={{ width: "100%" }}
+        className="w-full mb-2"
       />
       <input
         type="number"
         value={params[key] as number}
         onChange={(e) => handleChange(key, Number(e.target.value))}
-        style={{ width: 70 }}
+        className="w-16 px-2 py-1 border border-gray-300 rounded"
       />
     </div>
   );
 
   return (
-    <div style={{ display: "flex", gap: "2rem", padding: "2rem" }}>
-      <div style={{ width: 400 }}>
+    <div className="flex gap-8 p-8 bg-white min-h-screen">
+      <div className="w-96">
         <Section title="Outer Dimensions">
           {numberInput("width")}
           {numberInput("height")}
@@ -145,16 +136,20 @@ export default function Home() {
         </Section>
 
         <Section title="Cutouts">
-          <button onClick={addBoxCutout}>Add Box Cutout</button>
-          <button onClick={addCylinderCutout} style={{ marginLeft: 10 }}>
+          <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+            Add Box Cutout
+          </button>
+          <button onClick={addCylinderCutout} className="ml-3 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
             Add Cylinder Cutout
           </button>
         </Section>
 
-        <button onClick={downloadSTL}>Download STL</button>
+        <button onClick={downloadSTL} className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-semibold">
+          Download STL
+        </button>
       </div>
 
-      <div style={{ width: 600, height: 600 }}>
+      <div className="w-full h-full bg-gray-50 rounded-lg shadow-md">
         {meshData && (
           <Preview vertices={meshData.vertices} indices={meshData.indices} />
         )}

@@ -9,7 +9,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@jscad/csg": "^0.7.0",
     "@jscad/modeling": "^2.13.0",
     "@jscad/stl-serializer": "^2.1.23",
     "@react-three/drei": "^10.7.7",

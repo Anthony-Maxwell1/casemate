@@ -67,10 +67,16 @@ export function build(params: Params): geom3.Geom3 {
   });
 
   // Inner cavity (offset from TOP = Y+)
-  const inner = roundedCuboid({
+  const rounded = roundedCuboid({
     size: [innerWidth, innerHeight, innerDepth],
     roundRadius: innerRadius,
-  });
+  })
+  
+  const solid = translate([0, innerRadius, 0], cuboid({
+    size: [innerWidth, innerHeight-innerRadius, innerDepth],
+  }));
+
+  const inner = union(rounded, solid)
 
   const innerTranslated = translate(
     [0, height / 2 - innerHeight / 2, 0],
@@ -82,14 +88,21 @@ export function build(params: Params): geom3.Geom3 {
   // Lip
   if (lipHeight > 0) {
     const lip = cuboid({
-      size: [innerWidth, lipHeight, lipInset],
+      size: [innerWidth, height + lipHeight, innerDepth],
     });
 
-    const lipTranslated = translate([0, height / 2 - lipHeight / 2, 0], lip);
+    const cutout = cuboid({
+      size: [innerWidth - lipInset, innerHeight, innerDepth - lipInset],
+    })
 
-    const finalLip = subtract(lipTranslated, innerTranslated);
+    const step = subtract(lip, cutout);
+    const step2 = subtract(step, inner)
 
-    body = union(body, finalLip);
+    const lipTranslated = translate([0, height / 2 - lipHeight / 2, 0], step2);
+
+    // const finalLip = subtract(lipTranslated, innerTranslated);
+
+    body = union(body, lipTranslated);
   }
 
   const minCorner = [-width / 2, -height / 2, -depth / 2];

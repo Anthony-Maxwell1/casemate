@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export interface Phone {
   width: number;
@@ -30,7 +30,7 @@ export default function Designer() {
     width: 70,
     height: 120,
     depth: 8,
-    cornerRadius: 5,
+    cornerRadius: 0,
     cameras: [
       { position: [35, 20], shape: "circle", radius: 6 },
       { position: [35, 32], shape: "circle", radius: 2 },
@@ -183,7 +183,7 @@ export default function Designer() {
     max = 200,
   ) => (
     <div className="flex items-center gap-2 mb-2">
-      <label className="w-28 text-sm">{label}</label>
+      <label className="w-28 text-sm text-gray-700">{label}</label>
       <input
         type="range"
         min={min}
@@ -196,27 +196,27 @@ export default function Designer() {
         type="number"
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-16 bg-zinc-800 text-white rounded px-2 py-1 text-sm"
+        className="w-16 bg-white text-gray-900 border border-gray-300 rounded px-2 py-1 text-sm"
       />
     </div>
   );
 
   return (
-    <div className="flex gap-8 p-8 min-h-screen">
+    <div className="flex gap-8 p-8 min-h-screen bg-white">
       {/* Controls */}
       <div className="w-96 shrink-0 space-y-4">
         <div className="flex-row flex gap-2">
-          <h1 className="text-2xl font-bold">Case Designer</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Case Designer</h1>
           <a
-            className="bg-green-800 hover:bg-green-700 px-3 py-1 rounded text-sm hover:cursor-pointer"
+            className="bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-sm text-white hover:cursor-pointer"
             href={`/designer/generate?phone=${encodeURIComponent(JSON.stringify(phone))}`}
           >
             Generate Case
           </a>
         </div>
 
-        <div className="bg-zinc-900 rounded-xl p-4 shadow-lg">
-          <h3 className="text-lg font-semibold mb-3">Phone Dimensions</h3>
+        <div className="bg-gray-50 rounded-xl p-4 shadow-lg border border-gray-200">
+          <h3 className="text-lg font-semibold mb-3 text-gray-900">Phone Dimensions</h3>
           {numberField("Width (mm)", phone.width, (v) =>
             updatePhone("width", v),
           )}
@@ -226,26 +226,20 @@ export default function Designer() {
           {numberField("Depth (mm)", phone.depth, (v) =>
             updatePhone("depth", v),
           )}
-          {numberField(
-            "Corner Radius",
-            phone.cornerRadius,
-            (v) => updatePhone("cornerRadius", v),
-            0,
-            30,
-          )}
+          <p className="text-sm text-gray-600">Note: Corner radius will be available on next page, as it is not a required measurement for defining your phone, rather used to fine tune the case.</p>
         </div>
 
-        <div className="bg-zinc-900 rounded-xl p-4 shadow-lg">
-          <h3 className="text-lg font-semibold mb-3">Cameras</h3>
+        <div className="bg-gray-50 rounded-xl p-4 shadow-lg border border-gray-200">
+          <h3 className="text-lg font-semibold mb-3 text-gray-900">Cameras</h3>
           {phone.cameras.map((cam, idx) => (
-            <div key={idx} className="mb-3 p-3 bg-zinc-800 rounded-lg relative">
+            <div key={idx} className="mb-3 p-3 bg-white rounded-lg border border-gray-200 relative">
               <button
                 onClick={() => removeCamera(idx)}
-                className="absolute top-2 right-2 text-red-400 text-sm hover:text-red-300"
+                className="absolute top-2 right-2 text-red-500 text-sm hover:text-red-700"
               >
                 ✕
               </button>
-              <p className="text-xs text-zinc-400 mb-2">Camera {idx + 1}</p>
+              <p className="text-xs text-gray-500 mb-2">Camera {idx + 1}</p>
               {numberField("X", cam.position[0], (v) =>
                 updateCamera(idx, "position", [v, cam.position[1]]),
               )}
@@ -259,23 +253,23 @@ export default function Designer() {
           ))}
           <button
             onClick={addCamera}
-            className="bg-zinc-700 hover:bg-zinc-600 px-3 py-1 rounded text-sm"
+            className="bg-gray-200 hover:bg-gray-300 text-gray-900 px-3 py-1 rounded text-sm"
           >
             + Add Camera
           </button>
         </div>
 
-        <div className="bg-zinc-900 rounded-xl p-4 shadow-lg">
-          <h3 className="text-lg font-semibold mb-3">Buttons</h3>
+        <div className="bg-gray-50 rounded-xl p-4 shadow-lg border border-gray-200">
+          <h3 className="text-lg font-semibold mb-3 text-gray-900">Buttons</h3>
           {phone.buttons.map((btn, idx) => (
-            <div key={idx} className="mb-3 p-3 bg-zinc-800 rounded-lg relative">
+            <div key={idx} className="mb-3 p-3 bg-white rounded-lg border border-gray-200 relative">
               <button
                 onClick={() => removeButton(idx)}
-                className="absolute top-2 right-2 text-red-400 text-sm hover:text-red-300"
+                className="absolute top-2 right-2 text-red-500 text-sm hover:text-red-700"
               >
                 ✕
               </button>
-              <p className="text-xs text-zinc-400 mb-2">Button {idx + 1}</p>
+              <p className="text-xs text-gray-500 mb-2">Button {idx + 1}</p>
               {numberField("X", btn.position[0], (v) =>
                 updateButton(idx, "position", [v, btn.position[1]]),
               )}
@@ -292,7 +286,7 @@ export default function Designer() {
           ))}
           <button
             onClick={addButton}
-            className="bg-zinc-700 hover:bg-zinc-600 px-3 py-1 rounded text-sm"
+            className="bg-gray-200 hover:bg-gray-300 text-gray-900 px-3 py-1 rounded text-sm"
           >
             + Add Button
           </button>
@@ -303,13 +297,13 @@ export default function Designer() {
       <div className="flex-1 flex flex-col items-center gap-12">
         {/* Back View */}
         <div>
-          <h2 className="text-xl font-semibold mb-4 text-center">Back View</h2>
+          <h2 className="text-xl font-semibold mb-4 text-center text-gray-900">Back View</h2>
           <div
             style={{
               width: phone.width * cmToPx,
               height: phone.height * cmToPx,
-              background: "lightgray",
-              border: "1px solid #555",
+              background: "#f3f4f6",
+              border: "1px solid #d1d5db",
               borderRadius: phone.cornerRadius * cmToPx,
               position: "relative",
             }}
@@ -317,19 +311,19 @@ export default function Designer() {
             {backCutouts.map((cutout, idx) => renderCutout(cutout, idx))}
 
             {/* Height dimension */}
-            <div className="absolute -right-8 top-0 w-0.5 h-full bg-slate-500">
-              <div className="absolute -left-2 w-5 h-0.5 bg-slate-500" />
-              <div className="absolute -left-2 bottom-0 w-5 h-0.5 bg-slate-500" />
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 px-1 text-xs bg-slate-700 rounded whitespace-nowrap">
+            <div className="absolute -right-8 top-0 w-0.5 h-full bg-gray-400">
+              <div className="absolute -left-2 w-5 h-0.5 bg-gray-400" />
+              <div className="absolute -left-2 bottom-0 w-5 h-0.5 bg-gray-400" />
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 px-1 text-xs bg-gray-100 border border-gray-300 rounded whitespace-nowrap">
                 {phone.height}mm
               </span>
             </div>
 
             {/* Width dimension */}
-            <div className="absolute -bottom-8 left-0 h-0.5 w-full bg-slate-500">
-              <div className="absolute -bottom-2 h-5 w-0.5 bg-slate-500" />
-              <div className="absolute -bottom-2 right-0 h-5 w-0.5 bg-slate-500" />
-              <span className="absolute left-1/2 top-4 -translate-x-1/2 px-1 text-xs bg-slate-700 rounded whitespace-nowrap">
+            <div className="absolute -bottom-8 left-0 h-0.5 w-full bg-gray-400">
+              <div className="absolute -bottom-2 h-5 w-0.5 bg-gray-400" />
+              <div className="absolute -bottom-2 right-0 h-5 w-0.5 bg-gray-400" />
+              <span className="absolute left-1/2 top-4 -translate-x-1/2 px-1 text-xs bg-gray-100 border border-gray-300 rounded whitespace-nowrap">
                 {phone.width}mm
               </span>
             </div>
@@ -340,25 +334,25 @@ export default function Designer() {
         <div className="flex gap-16">
           {/* Left Side */}
           <div>
-            <h2 className="text-xl font-semibold mb-4 text-center">
+            <h2 className="text-xl font-semibold mb-4 text-center text-gray-900">
               Left Side
             </h2>
             <div
               style={{
                 width: phone.depth * cmToPx,
                 height: phone.height * cmToPx,
-                background: "lightgray",
-                border: "1px solid #555",
+                background: "#f3f4f6",
+                border: "1px solid #d1d5db",
                 borderRadius: phone.cornerRadius * cmToPx,
                 position: "relative",
               }}
             >
               {leftButtons.map((btn, idx) => renderCutout(btn, idx))}
 
-              <div className="absolute -bottom-8 left-0 h-0.5 w-full bg-slate-500">
-                <div className="absolute -bottom-2 h-5 w-0.5 bg-slate-500" />
-                <div className="absolute -bottom-2 right-0 h-5 w-0.5 bg-slate-500" />
-                <span className="absolute left-1/2 top-4 -translate-x-1/2 px-1 text-xs bg-slate-700 rounded whitespace-nowrap">
+              <div className="absolute -bottom-8 left-0 h-0.5 w-full bg-gray-400">
+                <div className="absolute -bottom-2 h-5 w-0.5 bg-gray-400" />
+                <div className="absolute -bottom-2 right-0 h-5 w-0.5 bg-gray-400" />
+                <span className="absolute left-1/2 top-4 -translate-x-1/2 px-1 text-xs bg-gray-100 border border-gray-300 rounded whitespace-nowrap">
                   {phone.depth}mm
                 </span>
               </div>
@@ -367,15 +361,15 @@ export default function Designer() {
 
           {/* Right Side */}
           <div>
-            <h2 className="text-xl font-semibold mb-4 text-center">
+            <h2 className="text-xl font-semibold mb-4 text-center text-gray-900">
               Right Side
             </h2>
             <div
               style={{
                 width: phone.depth * cmToPx,
                 height: phone.height * cmToPx,
-                background: "lightgray",
-                border: "1px solid #555",
+                background: "#f3f4f6",
+                border: "1px solid #d1d5db",
                 borderRadius: phone.cornerRadius * cmToPx,
                 position: "relative",
               }}

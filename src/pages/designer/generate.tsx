@@ -8,6 +8,13 @@ export default function Generate() {
   const [phone, setPhone] = useState<Phone | null>(null);
   const [generatedParams, setGeneratedParams] = useState<Params | null>(null);
   const [meshData, setMeshData] = useState<any>(null);
+  const [caseWidth, setCaseWidth] = useState(0);
+  const [caseHeight, setCaseHeight] = useState(0);
+  const [caseDepth, setCaseDepth] = useState(0);
+  const [thickness, setThickness] = useState(10);
+  const [lipHeight, setLipHeight] = useState(5);
+  const [lipInset, setLipInset] = useState(2);
+  const [radius, setRadius] = useState(1);
 
   useEffect(() => {
     // JSCAD case coordinate system:
@@ -101,11 +108,15 @@ export default function Generate() {
       }
     }
 
-    function generateParams(phone_: Phone = phone!): Params {
+    function generateParams(phone_: Phone = phone!, init: boolean = false): Params {
       const { width, height, depth, cameras, buttons } = phone_;
-      const caseWidth = width + 10;
-      const caseHeight = depth + 10;
-      const caseDepth = height + 10;
+
+      if (init) {
+        setCaseWidth(width + thickness);
+        setCaseHeight(depth + thickness);
+        setCaseDepth(height + thickness);
+      }
+
       const caseDims = {
         width: caseWidth,
         height: caseHeight,
@@ -136,18 +147,18 @@ export default function Generate() {
       );
 
       return {
-        width: caseWidth,
-        height: caseHeight,
-        depth: caseDepth,
+        width: init ? width + thickness : caseWidth,
+        height: init ? depth + thickness : caseHeight,
+        depth: init ? height + thickness : caseDepth,
 
         innerWidth: width,
         innerHeight: depth,
         innerDepth: height,
 
-        lipHeight: 5,
-        lipInset: 2,
+        lipHeight,
+        lipInset,
 
-        radius: 1,
+        radius,
 
         cutouts: [
           ...cameraCutouts.map((c) => toCutout(c, caseDims)),
@@ -160,7 +171,7 @@ export default function Generate() {
     if (phoneParam) {
       const parsedPhone = JSON.parse(phoneParam);
       setPhone(parsedPhone);
-      const newParams = generateParams(parsedPhone);
+      const newParams = generateParams(parsedPhone, true);
       setGeneratedParams(newParams);
 
       const geom = build(newParams);
@@ -175,7 +186,7 @@ export default function Generate() {
       {(generatedParams && (
         <div>
           <h3>Case Generated</h3>
-          <div className="w-xl h-xl">
+          <div className="w-full h-full absolute left-0 top-0 -z-10">
             {meshData && (
               <Preview
                 vertices={meshData.vertices}
