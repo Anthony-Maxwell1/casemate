@@ -194,6 +194,16 @@ export default function Generate() {
               />
             )}
           </div>
+          <div className="w-96 bg-gray-50 rounded-xl p-4 shadow-lg border border-gray-200">
+            <h2>Customize</h2>
+            <label>Rounded edges</label>
+            <select>
+              <option value="0">None</option>
+              <option value="1">Light</option>
+              <option value="2">Medium</option>
+              <option value="3">Heavy</option>
+            </select>
+          </div>
         </div>
       )) || (
         <div>

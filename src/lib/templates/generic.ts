@@ -87,22 +87,21 @@ export function build(params: Params): geom3.Geom3 {
 
   // Lip
   if (lipHeight > 0) {
-    const lip = cuboid({
-      size: [innerWidth, height + lipHeight, innerDepth],
+    const lip = roundedCuboid({
+      size: [width, height + lipHeight, depth],
+      roundRadius: radius,
     });
 
-    const cutout = cuboid({
-      size: [innerWidth - lipInset, innerHeight, innerDepth - lipInset],
-    })
+    const step = subtract(lip, outer);
+    const step2 = subtract(step, cuboid({
+      size: [innerWidth-lipInset, height+lipHeight, innerDepth-lipInset],
+    }))
 
-    const step = subtract(lip, cutout);
-    const step2 = subtract(step, inner)
-
-    const lipTranslated = translate([0, height / 2 - lipHeight / 2, 0], step2);
+    // const lipTranslated = translate([0, height / 2 - lipHeight / 2, 0], step2);
 
     // const finalLip = subtract(lipTranslated, innerTranslated);
 
-    body = union(body, lipTranslated);
+    body = union(body, step2);
   }
 
   const minCorner = [-width / 2, -height / 2, -depth / 2];
