@@ -62,7 +62,7 @@ export function build(params: Params): geom3.Geom3 {
 
   // Outer shell (centered)
   const outer = roundedCuboid({
-    size: [width, height, depth],
+    size: [width, height + lipHeight, depth],
     roundRadius: radius,
   });
 
@@ -70,13 +70,16 @@ export function build(params: Params): geom3.Geom3 {
   const rounded = roundedCuboid({
     size: [innerWidth, innerHeight, innerDepth],
     roundRadius: innerRadius,
-  })
-  
-  const solid = translate([0, innerRadius, 0], cuboid({
-    size: [innerWidth, innerHeight-innerRadius, innerDepth],
-  }));
+  });
 
-  const inner = union(rounded, solid)
+  const solid = translate(
+    [0, innerRadius, 0],
+    cuboid({
+      size: [innerWidth, innerHeight - innerRadius, innerDepth],
+    }),
+  );
+
+  const inner = union(rounded, solid);
 
   const innerTranslated = translate(
     [0, height / 2 - innerHeight / 2, 0],
@@ -86,23 +89,29 @@ export function build(params: Params): geom3.Geom3 {
   let body = subtract(outer, innerTranslated);
 
   // Lip
-  if (lipHeight > 0) {
-    const lip = roundedCuboid({
-      size: [width, height + lipHeight, depth],
-      roundRadius: radius,
-    });
+  // if (lipHeight > 0) {
+  //   const lip = roundedCuboid({
+  //     size: [width, lipHeight, depth],
+  //     // roundRadius: radius,
+  //   });
 
-    const step = subtract(lip, outer);
-    const step2 = subtract(step, cuboid({
-      size: [innerWidth-lipInset, height+lipHeight, innerDepth-lipInset],
-    }))
+  //   const lipTranslated = translate([0, height / 2 + lipHeight / 2, 0], lip);
 
-    // const lipTranslated = translate([0, height / 2 - lipHeight / 2, 0], step2);
+  const lipCutout = cuboid({
+    size: [innerWidth - lipInset, lipHeight, innerDepth - lipInset],
+  });
 
-    // const finalLip = subtract(lipTranslated, innerTranslated);
+  const lipCutoutTranslated = translate(
+    [0, height / 2 + lipHeight / 2, 0],
+    lipCutout,
+  );
 
-    body = union(body, step2);
-  }
+  //   const finalLip = subtract(lipTranslated, lipCutoutTranslated);
+
+  //   body = union(body, finalLip);
+  // }
+
+  body = subtract(body, lipCutoutTranslated);
 
   const minCorner = [-width / 2, -height / 2, -depth / 2];
 

@@ -16,6 +16,147 @@ export default function Generate() {
   const [lipInset, setLipInset] = useState(2);
   const [radius, setRadius] = useState(1);
 
+  const wall = 5;
+
+  function toCutout(
+    obj: PhoneCutout,
+    caseDims: { width: number; height: number; depth: number },
+  ): Cutout {
+    const px = obj.position[0]; // phone X (along width)
+    const py = obj.position[1]; // phone Y (along height)
+    // Inner cavity center Y from minCorner
+    const innerCenterY = (caseDims.height + 10) / 2;
+
+    if (obj.shape === "circle") {
+      const r = obj.radius ?? 5;
+      const h = 30; // generous cut-through
+
+      switch (obj.face) {
+        case "left":
+          return {
+            type: "cylinder",
+            radius: r,
+            height: h,
+            position: [0, innerCenterY, wall + py],
+            axis: "x",
+          };
+        case "right":
+          return {
+            type: "cylinder",
+            radius: r,
+            height: h,
+            position: [caseDims.width, innerCenterY, wall + py],
+            axis: "x",
+          };
+        case "back":
+        default:
+          return {
+            type: "cylinder",
+            radius: r,
+            height: h,
+            position: [wall + px, 0, wall + py],
+            axis: "z",
+          };
+      }
+    } else {
+      // box cutout
+      const sw = obj.size?.[0] ?? 5;
+      const sh = obj.size?.[1] ?? 10;
+
+      switch (obj.face) {
+        case "left":
+          // Cut through X wall; sw along Y (depth), sh along Z (height)
+          return {
+            type: "box",
+            size: [20, sw, sh],
+            position: [-10, innerCenterY - sw / 2, wall + py - sh / 2],
+          };
+        case "right":
+          // Cut through X wall from the right side
+          return {
+            type: "box",
+            size: [20, sw, sh],
+            position: [
+              caseDims.width - 10,
+              innerCenterY - sw / 2,
+              wall + py - sh / 2,
+            ],
+          };
+        case "back":
+        default:
+          // Cut through Y wall (back); sw along X, sh along Z
+          return {
+            type: "box",
+            size: [sw, 20, sh],
+            position: [wall + px - sw / 2, -5, wall + py - sh / 2],
+          };
+      }
+    }
+  }
+
+  function generateParams(
+    phone_: Phone = phone!,
+    init: boolean = false,
+  ): Params {
+    const { width, height, depth, cameras, buttons } = phone_;
+
+    if (init) {
+      setCaseWidth(width + thickness);
+      setCaseHeight(depth + thickness);
+      setCaseDepth(height + thickness);
+    }
+
+    const caseDims = {
+      width: caseWidth,
+      height: caseHeight,
+      depth: caseDepth,
+    };
+
+    const cameraCutouts = cameras.map(
+      (c): PhoneCutout => ({
+        shape: c.shape,
+        position: c.position,
+        radius: c.radius,
+        face: "back",
+      }),
+    );
+
+    const buttonCutouts = buttons.map(
+      (b): PhoneCutout => ({
+        shape: b.shape,
+        position: b.position,
+        size: b.size,
+        face:
+          b.position[0] <= width * 0.3
+            ? "left"
+            : b.position[0] >= width * 0.7
+              ? "right"
+              : "back",
+      }),
+    );
+
+    return {
+      width: init ? width + thickness : caseWidth,
+      height: init ? depth + thickness : caseHeight,
+      depth: init ? height + thickness : caseDepth,
+
+      innerWidth: width,
+      innerHeight: depth,
+      innerDepth: height,
+
+      lipHeight,
+      lipInset,
+
+      radius,
+      innerRadius: 0,
+
+      cutouts: [
+        ...cameraCutouts.map((c) => toCutout(c, caseDims)),
+        ...buttonCutouts.map((b) => toCutout(b, caseDims)),
+      ],
+    };
+  }
+
   useEffect(() => {
     // JSCAD case coordinate system:
     //   X = case width  (phone width + 10)
@@ -30,142 +171,6 @@ export default function Generate() {
     //   "z" → rotateX → cylinder along Y   (for back face cuts)
     //   "y" / default → no rotation → along Z
 
-    const wall = 5;
-
-    function toCutout(
-      obj: PhoneCutout,
-      caseDims: { width: number; height: number; depth: number },
-    ): Cutout {
-      const px = obj.position[0]; // phone X (along width)
-      const py = obj.position[1]; // phone Y (along height)
-      // Inner cavity center Y from minCorner
-      const innerCenterY = (caseDims.height + 10) / 2;
-
-      if (obj.shape === "circle") {
-        const r = obj.radius ?? 5;
-        const h = 30; // generous cut-through
-
-        switch (obj.face) {
-          case "left":
-            return {
-              type: "cylinder",
-              radius: r,
-              height: h,
-              position: [0, innerCenterY, wall + py],
-              axis: "x",
-            };
-          case "right":
-            return {
-              type: "cylinder",
-              radius: r,
-              height: h,
-              position: [caseDims.width, innerCenterY, wall + py],
-              axis: "x",
-            };
-          case "back":
-          default:
-            return {
-              type: "cylinder",
-              radius: r,
-              height: h,
-              position: [wall + px, 0, wall + py],
-              axis: "z",
-            };
-        }
-      } else {
-        // box cutout
-        const sw = obj.size?.[0] ?? 5;
-        const sh = obj.size?.[1] ?? 10;
-
-        switch (obj.face) {
-          case "left":
-            // Cut through X wall; sw along Y (depth), sh along Z (height)
-            return {
-              type: "box",
-              size: [20, sw, sh],
-              position: [-10, innerCenterY - sw / 2, wall + py - sh / 2],
-            };
-          case "right":
-            // Cut through X wall from the right side
-            return {
-              type: "box",
-              size: [20, sw, sh],
-              position: [
-                caseDims.width - 10,
-                innerCenterY - sw / 2,
-                wall + py - sh / 2,
-              ],
-            };
-          case "back":
-          default:
-            // Cut through Y wall (back); sw along X, sh along Z
-            return {
-              type: "box",
-              size: [sw, 20, sh],
-              position: [wall + px - sw / 2, -5, wall + py - sh / 2],
-            };
-        }
-      }
-    }
-
-    function generateParams(phone_: Phone = phone!, init: boolean = false): Params {
-      const { width, height, depth, cameras, buttons } = phone_;
-
-      if (init) {
-        setCaseWidth(width + thickness);
-        setCaseHeight(depth + thickness);
-        setCaseDepth(height + thickness);
-      }
-
-      const caseDims = {
-        width: caseWidth,
-        height: caseHeight,
-        depth: caseDepth,
-      };
-
-      const cameraCutouts = cameras.map(
-        (c): PhoneCutout => ({
-          shape: c.shape,
-          position: c.position,
-          radius: c.radius,
-          face: "back",
-        }),
-      );
-
-      const buttonCutouts = buttons.map(
-        (b): PhoneCutout => ({
-          shape: b.shape,
-          position: b.position,
-          size: b.size,
-          face:
-            b.position[0] <= width * 0.3
-              ? "left"
-              : b.position[0] >= width * 0.7
-                ? "right"
-                : "back",
-        }),
-      );
-
-      return {
-        width: init ? width + thickness : caseWidth,
-        height: init ? depth + thickness : caseHeight,
-        depth: init ? height + thickness : caseDepth,
-
-        innerWidth: width,
-        innerHeight: depth,
-        innerDepth: height,
-
-        lipHeight,
-        lipInset,
-
-        radius,
-
-        cutouts: [
-          ...cameraCutouts.map((c) => toCutout(c, caseDims)),
-          ...buttonCutouts.map((b) => toCutout(b, caseDims)),
-        ],
-      };
-    }
     const params = new URLSearchParams(window.location.search);
     const phoneParam = params.get("phone");
     if (phoneParam) {
@@ -181,6 +186,15 @@ export default function Generate() {
       window.location.href = "/designer";
     }
   }, []);
+  function regenerate() {
+    if (!phone) return;
+    const newParams = generateParams(phone, true);
+    setGeneratedParams(newParams);
+
+    const geom = build(newParams);
+    const mesh = geom3ToMesh(geom);
+    setMeshData(mesh);
+  }
   return (
     <div className="p-8">
       {(generatedParams && (
@@ -194,15 +208,49 @@ export default function Generate() {
               />
             )}
           </div>
-          <div className="w-96 bg-gray-50 rounded-xl p-4 shadow-lg border border-gray-200">
-            <h2>Customize</h2>
-            <label>Rounded edges</label>
-            <select>
-              <option value="0">None</option>
-              <option value="1">Light</option>
-              <option value="2">Medium</option>
-              <option value="3">Heavy</option>
-            </select>
+          <div className="fixed right-8 top-8 w-80 bg-white/90 backdrop-blur-md rounded-2xl p-6 shadow-2xl border border-gray-100 space-y-6 z-10">
+            <h2 className="text-lg font-semibold text-gray-800 tracking-tight">
+              Customize
+            </h2>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-600">
+                Rounded Edges
+              </label>
+              <select
+                defaultValue="0"
+                onChange={(e) => setRadius(Number(e.target.value))}
+                className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 shadow-sm transition focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              >
+                <option value="0">None</option>
+                <option value="3">Light</option>
+                <option value="5">Medium</option>
+                <option value="8">Heavy</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-600">
+                Thickness
+              </label>
+              <select
+                defaultValue="8"
+                onChange={(e) => setThickness(Number(e.target.value))}
+                className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 shadow-sm transition focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              >
+                <option value="1">Extra Small</option>
+                <option value="3">Small</option>
+                <option value="6">Medium</option>
+                <option value="8">Large</option>
+              </select>
+            </div>
+
+            <button
+              className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow transition hover:bg-blue-700 active:scale-[0.98]"
+              onClick={regenerate}
+            >
+              Regenerate
+            </button>
           </div>
         </div>
       )) || (
